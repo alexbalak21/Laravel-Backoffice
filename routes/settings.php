@@ -22,6 +22,12 @@ Route::middleware('auth')->group(function () {
     Route::get('settings/appearance', function () {
         return Inertia::render('settings/appearance');
     })->name('appearance.edit');
+    
+    Route::get('settings/role', function () {
+        return Inertia::render('settings/role', [
+            'role' => auth()->user()->role,
+        ]);
+    })->name('role.show');
 
     Route::get('settings/two-factor', [TwoFactorAuthenticationController::class, 'show'])
         ->name('two-factor.show');

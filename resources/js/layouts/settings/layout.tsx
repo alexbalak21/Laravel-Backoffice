@@ -10,6 +10,7 @@ import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/react';
 import { type PropsWithChildren } from 'react';
 
+
 const sidebarNavItems: NavItem[] = [
     {
         title: 'Profile',
@@ -29,6 +30,11 @@ const sidebarNavItems: NavItem[] = [
     {
         title: 'Appearance',
         href: editAppearance(),
+        icon: null,
+    },
+    {
+        title: 'Role',
+        href: "/settings/role",
         icon: null,
     },
 ];
