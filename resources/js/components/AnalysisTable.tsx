@@ -60,42 +60,52 @@ const columnFieldNames = [
 export default function AnalysisTable() {
   const [data, setData] = useState<Row[]>([]);
 
-  const handleSave = () => {
-    // Transform the data to match the expected format
-    const tableData = data.map((row: Row) => {
-      return row.reduce((acc: Record<string, string>, cell: Cell, index: number) => {
-        const fieldName = columnFieldNames[index];
-        return {
-          ...acc,
-          [fieldName]: cell?.value || ''
-        };
-      }, {} as Record<string, string>);
-    });
+  const handleSave = async () => {
+    try {
+      // Transform the data to match the expected format
+      const tableData = data.map((row: Row) => {
+        const rowData: Record<string, string> = {};
+        
+        // Map each cell to the correct field name
+        row.forEach((cell, index) => {
+          const fieldName = columnFieldNames[index];
+          if (fieldName) {
+            rowData[columnDisplayNames[index]] = cell?.value || '';
+          }
+        });
+        
+        return rowData;
+      });
 
-    // Add the current date and time for created_at and updated_at
-    const now = new Date().toISOString();
-    const dataWithTimestamps = tableData.map(row => ({
-      ...row,
-      created_at: now,
-      updated_at: now,
-    }));
+      // Log the data being sent for debugging
+      console.log('Sending data to server:', JSON.stringify({ rows: tableData }, null, 2));
 
-    router.post('/analyses/save',
-      { rows: dataWithTimestamps },
-      {
-        preserveScroll: true,
-        preserveState: true,
-        onSuccess: () => {
-          toast.success(`Successfully saved ${dataWithTimestamps.length} rows`);
-          // Optionally refresh the data
-          // router.reload();
-        },
-        onError: (errors) => {
-          console.error('Save error:', errors);
-          toast.error('Failed to save data. Please check the console for details.');
+      // Send the data to the server using Inertia
+      router.post('/analyses/save', 
+        { rows: tableData },
+        {
+          preserveScroll: true,
+          preserveState: true,
+          onSuccess: (page) => {
+            if (page.props.flash?.success) {
+              toast.success(page.props.flash.success);
+            } else if (page.props.errors?.error) {
+              toast.error(page.props.errors.error);
+            }
+          },
+          onError: (errors) => {
+            console.error('Save error:', errors);
+            const errorMessage = errors?.error || 'Failed to save data. Please check the console for details.';
+            toast.error(errorMessage);
+          }
         }
-      }
-    );
+      );
+      
+    } catch (error) {
+      console.error('Error saving data:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to save data';
+      toast.error(errorMessage);
+    }
   }
 
   const handleChange = (newData: Matrix<CellBase<string>>) => {

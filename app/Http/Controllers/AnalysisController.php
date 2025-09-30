@@ -65,16 +65,17 @@ class AnalysisController extends Controller
             // Insert all records in a single query
             Analysis::insert($validatedData);
 
-            return response()->json([
-                'message' => 'Data saved successfully',
+            // Return a proper Inertia response
+            return redirect()->back()->with([
+                'success' => 'Data saved successfully',
                 'saved_rows' => count($validatedData)
-            ], 201);
+            ]);
 
         } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Failed to save data',
-                'error' => $e->getMessage()
-            ], 500);
+            // Return a proper Inertia error response
+            return back()->withErrors([
+                'error' => 'Failed to save data: ' . $e->getMessage()
+            ]);
         }
     }
 
