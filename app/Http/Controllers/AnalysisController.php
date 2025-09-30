@@ -154,23 +154,31 @@ class AnalysisController extends Controller
                 }
             }
 
-            // Return a proper Inertia response
+            // Return a proper Inertia response with flash message
             return redirect()->back()->with([
-                'success' => 'Data saved successfully',
-                'saved_rows' => $savedCount
+                'flash' => [
+                    'message' => [
+                        'type' => 'success',
+                        'text' => 'Data saved successfully',
+                        'saved_rows' => $savedCount
+                    ]
+                ]
             ]);
-
         } catch (\Exception $e) {
             \Log::error('Error saving analysis data: ' . $e->getMessage(), [
                 'trace' => $e->getTraceAsString(),
                 'file' => $e->getFile(),
                 'line' => $e->getLine()
             ]);
-            
             // Return a proper Inertia error response with more details
-            return back()->withErrors([
-                'error' => 'Failed to save data: ' . $e->getMessage() . 
-                          ' in ' . $e->getFile() . ' on line ' . $e->getLine()
+            return back()->with([
+                'flash' => [
+                    'message' => [
+                        'type' => 'error',
+                        'text' => 'Failed to save data: ' . $e->getMessage(),
+                        'details' => $e->getFile() . ' on line ' . $e->getLine()
+                    ]
+                ]
             ]);
         }
     }

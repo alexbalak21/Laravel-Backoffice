@@ -1,8 +1,8 @@
 import Spreadsheet, { CellBase, Matrix } from "react-spreadsheet";
 import { Button } from "@/components/ui/button"
 import { useState } from "react"
-import { router } from '@inertiajs/react'
-import { toast } from 'sonner'
+import { router } from '@inertiajs/react';
+import { toast } from 'sonner';
 
 type Cell = CellBase<string> & { value: string };
 type Row = Cell[];
@@ -77,41 +77,21 @@ export default function AnalysisTable() {
         return rowData;
       });
 
-      // Log the data being sent for debugging
-      console.log('Sending data to server:', JSON.stringify({ rows: tableData }, null, 2));
-
-      // Send the data to the server using Inertia
-      router.post('/analyses', 
-        { rows: tableData },
-        {
-          preserveScroll: true,
-          preserveState: true,
-          onSuccess: (page: { 
-            props: { 
-              flash?: { success?: string };
-              errors?: { error?: string };
-            } 
-          }) => {
-            if (page.props.flash?.success) {
-              toast.success(page.props.flash.success);
-              // Clear the form after successful save
-              setData([]);
-            } else if (page.props.errors?.error) {
-              toast.error(page.props.errors.error);
-            }
-          },
-          onError: (errors) => {
-            console.error('Save error:', errors);
-            const errorMessage = errors?.error || 'Failed to save data. Please check the console for details.';
-            toast.error(errorMessage);
-          }
+      await router.post('/analyses', { rows: tableData }, {
+        preserveScroll: true,
+        preserveState: true,
+        onSuccess: () => {
+          toast.success('Data saved successfully');
+          setData([]);
+        },
+        onError: (errors: any) => {
+          const errorMessage = errors?.message || 'Failed to save data';
+          toast.error(errorMessage);
         }
-      );
-      
+      });
     } catch (error) {
-      console.error('Error saving data:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Failed to save data';
-      toast.error(errorMessage);
+      console.error('Error in form submission:', error);
+      toast.error('An unexpected error occurred. Please try again.');
     }
   }
 
