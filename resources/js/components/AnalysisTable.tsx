@@ -1,4 +1,8 @@
 import Spreadsheet from "react-spreadsheet"
+import { Button } from "@/components/ui/button"
+import { useState } from "react"
+import axios from "axios";
+import { toast } from 'sonner';
 
 const columnNames = [
   "Numéro Rapport",
@@ -25,9 +29,54 @@ const columnNames = [
 ]
 
 export default function AnalysisTable() {
-  const createEmptyRow = () => columnNames.map(() => ({value: ""}))
+  const [data, setData] = useState<Array<Array<{value: string}>>>([])
 
-  const data = Array(20).fill(null).map(createEmptyRow)
+  const handleSave = async () => {
+    const tableData = data.map(row => {
+      return row.reduce((acc, cell, index) => {
+        const columnName = columnNames[index];
+        return {
+          ...acc,
+          [columnName]: cell?.value || ''
+        };
+      }, {});
+    });
+    
+    try {
+      const response = await axios.post('/analyses/save', tableData, {
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+        }
+      });
+      
+      console.log('Data saved successfully:', response.data);
+      toast.success(`Successfully saved ${response.data.saved_rows} rows`);
+    } catch (error) {
+      console.error('Error saving data:', error);
+      toast.error('Failed to save data');
+    }
+  }
 
-  return <Spreadsheet data={data} columnLabels={columnNames} />
+  const handleChange = (newData: any) => {
+    setData(newData);
+    console.log(newData)
+  }
+
+  const createEmptyRow = () => columnNames.map(() => ({ value: '' }));
+
+  const rows = data.length > 0 ? data : Array(20).fill(null).map(createEmptyRow);
+
+  return (
+    <>
+      <Spreadsheet 
+        data={rows} 
+        columnLabels={columnNames} 
+        onChange={handleChange}
+      />
+      <Button className="mt-5 mb-5" onClick={handleSave}>
+        Sauvegarder
+      </Button>
+    </>
+  )
 }

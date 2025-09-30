@@ -13,6 +13,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     })->name('dashboard');
 
     Route::resource('analyses', \App\Http\Controllers\AnalysisController::class);
+    
+    // Add this new route for saving analysis data
+    Route::post('analyses/save', [\App\Http\Controllers\AnalysisController::class, 'saveData'])
+        ->name('analyses.save');
 });
 
 require __DIR__.'/settings.php';
