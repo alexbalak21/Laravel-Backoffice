@@ -28,26 +28,11 @@ class AnalysisController extends Controller
 
     /**
      * Store a newly created resource in storage.
+     *
      * @param StoreAnalysisDataRequest $request
+     * @return \Illuminate\Http\RedirectResponse
      */
     public function store(StoreAnalysisDataRequest $request)
-    {
-        //
-    }
-
-    /**
-     * Save analysis data from the spreadsheet
-     *
-     * @param StoreAnalysisDataRequest $request
-     * @return \Illuminate\Http\JsonResponse
-     */
-    /**
-     * Save analysis data from the spreadsheet
-     *
-     * @param StoreAnalysisDataRequest $request
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function saveData(StoreAnalysisDataRequest $request)
     {
         try {
             // Get the processed and validated data

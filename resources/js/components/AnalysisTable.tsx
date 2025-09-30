@@ -64,13 +64,13 @@ export default function AnalysisTable() {
     try {
       // Transform the data to match the expected format
       const tableData = data.map((row: Row) => {
-        const rowData: Record<string, string> = {};
+        const rowData: Record<string, any> = {};
         
         // Map each cell to the correct field name
         row.forEach((cell, index) => {
           const fieldName = columnFieldNames[index];
           if (fieldName) {
-            rowData[columnDisplayNames[index]] = cell?.value || '';
+            rowData[fieldName] = cell?.value || '';
           }
         });
         
@@ -81,14 +81,21 @@ export default function AnalysisTable() {
       console.log('Sending data to server:', JSON.stringify({ rows: tableData }, null, 2));
 
       // Send the data to the server using Inertia
-      router.post('/analyses/save', 
+      router.post('/analyses', 
         { rows: tableData },
         {
           preserveScroll: true,
           preserveState: true,
-          onSuccess: (page) => {
+          onSuccess: (page: { 
+            props: { 
+              flash?: { success?: string };
+              errors?: { error?: string };
+            } 
+          }) => {
             if (page.props.flash?.success) {
               toast.success(page.props.flash.success);
+              // Clear the form after successful save
+              setData([]);
             } else if (page.props.errors?.error) {
               toast.error(page.props.errors.error);
             }
