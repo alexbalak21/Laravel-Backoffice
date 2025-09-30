@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Analysis;
 use App\Http\Requests\StoreAnalysisRequest;
 use App\Http\Requests\UpdateAnalysisRequest;
+use Inertia\Inertia;
 
 class AnalysisController extends Controller
 {
@@ -13,7 +14,7 @@ class AnalysisController extends Controller
      */
     public function index()
     {
-        //
+        return Inertia::render('Analyses/Index');
     }
 
     /**
