@@ -41,7 +41,7 @@ class StoreAnalysisDataRequest extends FormRequest
         // Define a mapping between display names and database fields
         $fieldMap = [
             'Numéro Rapport' => 'numero_rapport',
-            'Date et lieu de prélèvement' => 'lieu_prelevement',
+            'Date et lieu de prélèvement' => 'prelevement_data', // Will be split into two fields
             'Date, heure et T°C à la réception' => 'date_heure_reception_laboratoire',
             'Conditions de conservation' => 'conditions_conservation',
             'Date de mise en analyse' => 'date_heure_analyse',
@@ -65,14 +65,14 @@ class StoreAnalysisDataRequest extends FormRequest
 
         // Define default values for required fields
         $defaultValues = [
-            'conditions_conservation' => 'Non spécifié',
+            'conditions_conservation' => null,
             'date_emballage' => now()->format('Y-m-d'),
             'date_consommation' => now()->addDays(7)->format('Y-m-d'),
             'imp' => 0,
             'hx' => 0,
-            'note_nucleotide' => 'Non spécifié',
-            'cotation_fraicheur' => 'Non spécifié',
-            'observations' => 'Aucune observation',
+            'note_nucleotide' => null,
+            'cotation_fraicheur' => null,
+            'observations' => null,
             'ref_rapport' => 'REF-' . now()->format('YmdHis'),
         ];
 
@@ -102,6 +102,17 @@ class StoreAnalysisDataRequest extends FormRequest
                     }
                 }
 
+                // Parse prelevement data (e.g., "COPROMER, 27/08/2025, 11h30")
+                if (!empty($processedRow['prelevement_data'])) {
+                    $prelevement = $this->parsePrelevementData($processedRow['prelevement_data']);
+                    $processedRow['lieu_prelevement'] = $prelevement['lieu'] ?? null;
+                    $processedRow['date_heure_prelevement'] = $prelevement['date_heure'] ?? now();
+                    unset($processedRow['prelevement_data']); // Remove the temporary field
+                } else {
+                    $processedRow['lieu_prelevement'] = null;
+                    $processedRow['date_heure_prelevement'] = now();
+                }
+
                 // Parse reception data (e.g., "25/08/2025, 11h45, 4°C")
                 if (!empty($processedRow['date_heure_reception_laboratoire'])) {
                     $reception = $this->parseReceptionData($processedRow['date_heure_reception_laboratoire']);
@@ -129,15 +140,15 @@ class StoreAnalysisDataRequest extends FormRequest
                 // Ensure required fields have values
                 $requiredFields = [
                     'numero_rapport' => 'RAPPORT-' . now()->format('YmdHis'),
-                    'lieu_prelevement' => 'Non spécifié',
-                    'fournisseur_fabricant' => 'Non spécifié',
-                    'conditionnement' => 'Non spécifié',
-                    'agrement' => 'Non spécifié',
-                    'lot' => 'N/A',
-                    'type_peche' => 'Non spécifié',
-                    'nom_produit' => 'Non spécifié',
-                    'espece' => 'Non spécifié',
-                    'origine' => 'Non spécifié',
+                    'lieu_prelevement' => null,
+                    'fournisseur_fabricant' => null,
+                    'conditionnement' => null,
+                    'agrement' => null,
+                    'lot' => null,
+                    'type_peche' => null,
+                    'nom_produit' => null,
+                    'espece' => null,
+                    'origine' => null,
                 ];
 
                 foreach ($requiredFields as $field => $defaultValue) {
@@ -187,6 +198,46 @@ class StoreAnalysisDataRequest extends FormRequest
         // Extract temperature
         if (preg_match('/(\d+(\.\d+)?)\s*°C/i', $input, $tempMatch)) {
             $result['temperature'] = (float)$tempMatch[1];
+        }
+        
+        return $result;
+    }
+    
+    /**
+     * Parse prelevement data string (e.g., "COPROMER, 27/08/2025, 11h30")
+     */
+    protected function parsePrelevementData(string $input): array
+    {
+        $result = [
+            'lieu' => null,
+            'date_heure' => now()
+        ];
+        
+        // Split by comma and clean up the parts
+        $parts = array_map('trim', explode(',', $input));
+        
+        // First part is the location
+        if (count($parts) > 0) {
+            $result['lieu'] = $parts[0];
+        }
+        
+        // Second part should be the date (and possibly time)
+        if (count($parts) > 1) {
+            $dateTimeStr = $parts[1];
+            
+            // Check if there's a third part with time
+            if (count($parts) > 2 && preg_match('/^(\d{1,2})h(\d{0,2})?/i', $parts[2], $timeMatches)) {
+                $time = $timeMatches[1] . ':' . (!empty($timeMatches[2]) ? $timeMatches[2] : '00') . ':00';
+                $dateTimeStr .= ' ' . $time;
+            } else {
+                $dateTimeStr .= ' 00:00:00';
+            }
+            
+            try {
+                $result['date_heure'] = Carbon::createFromFormat('d/m/Y H:i:s', $dateTimeStr);
+            } catch (\Exception $e) {
+                \Log::warning('Failed to parse prelevement date: ' . $dateTimeStr);
+            }
         }
         
         return $result;
