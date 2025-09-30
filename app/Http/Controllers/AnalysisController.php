@@ -14,34 +14,7 @@ class AnalysisController extends Controller
      */
     public function index()
     {
-        $analyses = Analysis::latest()->paginate(15);
-        
-        return Inertia::render('Analyses/Index', [
-            'analyses' => $analyses->through(function ($analysis) {
-                return [
-                    'id' => $analysis->id,
-                    'numero_rapport' => $analysis->numero_rapport,
-                    'date_heure_prelevement' => $analysis->date_heure_prelevement,
-                    'date_heure_reception_laboratoire' => $analysis->date_heure_reception_laboratoire,
-                    'temperature_reception' => $analysis->temperature_reception,
-                    'date_heure_analyse' => $analysis->date_heure_analyse,
-                    'fournisseur_fabricant' => $analysis->fournisseur_fabricant,
-                    'conditionnement' => $analysis->conditionnement,
-                    'lot' => $analysis->lot,
-                    'type_peche' => $analysis->type_peche,
-                    'nom_produit' => $analysis->nom_produit,
-                    'espece' => $analysis->espece,
-                    'origine' => $analysis->origine,
-                    'date_emballage' => $analysis->date_emballage,
-                    'date_consommation' => $analysis->date_consommation,
-                    'imp' => $analysis->imp,
-                    'hx' => $analysis->hx,
-                    'cotation_fraicheur' => $analysis->cotation_fraicheur,
-                    'ref_rapport' => $analysis->ref_rapport,
-                ];
-            }),
-            'filters' => request()->only(['search']),
-        ]);
+        return Inertia::render('Analyses/Index');
     }
 
     /**
@@ -59,21 +32,7 @@ class AnalysisController extends Controller
      */
     public function store(StoreAnalysisDataRequest $request)
     {
-        $validatedData = $request->validated();
-        
-        // Since we're getting an array of rows, we need to process each row
-        $now = now();
-        $dataToInsert = array_map(function ($row) use ($now) {
-            return array_merge($row, [
-                'created_at' => $now,
-                'updated_at' => $now,
-            ]);
-        }, $validatedData);
-
-        // Insert the data
-        Analysis::insert($dataToInsert);
-        
-        return redirect()->route('analyses.index')->with('success', 'Data saved successfully');
+        //
     }
 
     /**
