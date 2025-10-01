@@ -119,12 +119,13 @@ export default function AnalysisTable() {
 
   return (
     <>
+    <div className="mx-4 overflow-x-auto">
       <Spreadsheet
         data={rows}
         columnLabels={columnDisplayNames}
         onChange={handleChange}
-      />
-      <Button className="mt-5 mb-5" onClick={handleSave}>
+      /></div>
+      <Button className="my-4 ms-5" onClick={handleSave}>
         Sauvegarder
       </Button>
     </>

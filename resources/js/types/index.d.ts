@@ -30,6 +30,34 @@ export interface SharedData {
     [key: string]: unknown;
 }
 
+export interface Analysis {
+    id?: number;
+    numero_rapport: string;
+    lieu_prelevement: string;
+    date_heure_reception_laboratoire: string;
+    conditions_conservation: string;
+    date_heure_analyse: string;
+    fournisseur_fabricant: string;
+    conditionnement: string;
+    agrement: string;
+    lot: string;
+    type_peche: string;
+    nom_produit: string;
+    espece: string;
+    origine: string;
+    date_emballage: string;
+    date_consommation: string;
+    imp: string;
+    hx: string;
+    note_nucleotide: string;
+    cotation_fraicheur: string;
+    observations: string;
+    ref_rapport: string;
+    created_at?: string;
+    updated_at?: string;
+    [key: string]: unknown; // For any additional properties
+}
+
 export interface User {
     id: number;
     name: string;
