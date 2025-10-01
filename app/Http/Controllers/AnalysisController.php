@@ -175,7 +175,6 @@ class AnalysisController extends Controller
                 'flash' => [
                     'message' => [
                         'type' => 'error',
-                        'text' => 'Failed to save data: ' . $e->getMessage(),
                         'details' => $e->getFile() . ' on line ' . $e->getLine()
                     ]
                 ]
@@ -184,42 +183,45 @@ class AnalysisController extends Controller
     }
 
     /**
-     * Display the specified resource.
+     * Display the analyses list.
      *
-     * @param  \App\Models\Analysis  $analysis
      * @return \Inertia\Response
      */
-    public function show(Analysis $analysis)
+    public function show()
     {
+        $analyses = Analysis::latest()->get();
+        
         return Inertia::render('Analyses/Show', [
-            'analysis' => [
-                'id' => $analysis->id,
-                'numero_rapport' => $analysis->numero_rapport,
-                'lieu_prelevement' => $analysis->lieu_prelevement,
-                'date_heure_prelevement' => $analysis->date_heure_prelevement,
-                'date_heure_reception_laboratoire' => $analysis->date_heure_reception_laboratoire,
-                'temperature_reception' => $analysis->temperature_reception,
-                'conditions_conservation' => $analysis->conditions_conservation,
-                'date_heure_analyse' => $analysis->date_heure_analyse,
-                'fournisseur_fabricant' => $analysis->fournisseur_fabricant,
-                'conditionnement' => $analysis->conditionnement,
-                'agrement' => $analysis->agrement,
-                'lot' => $analysis->lot,
-                'type_peche' => $analysis->type_peche,
-                'nom_produit' => $analysis->nom_produit,
-                'espece' => $analysis->espece,
-                'origine' => $analysis->origine,
-                'date_emballage' => $analysis->date_emballage,
-                'date_consommation' => $analysis->date_consommation,
-                'imp' => $analysis->imp,
-                'hx' => $analysis->hx,
-                'note_nucleotide' => $analysis->note_nucleotide,
-                'cotation_fraicheur' => $analysis->cotation_fraicheur,
-                'observations' => $analysis->observations,
-                'ref_rapport' => $analysis->ref_rapport,
-                'created_at' => $analysis->created_at,
-                'updated_at' => $analysis->updated_at,
-            ]
+            'analyses' => $analyses->map(function($analysis) {
+                return [
+                    'id' => $analysis->id,
+                    'numero_rapport' => $analysis->numero_rapport,
+                    'lieu_prelevement' => $analysis->lieu_prelevement,
+                    'date_heure_prelevement' => $analysis->date_heure_prelevement,
+                    'date_heure_reception_laboratoire' => $analysis->date_heure_reception_laboratoire,
+                    'temperature_reception' => $analysis->temperature_reception,
+                    'conditions_conservation' => $analysis->conditions_conservation,
+                    'date_heure_analyse' => $analysis->date_heure_analyse,
+                    'fournisseur_fabricant' => $analysis->fournisseur_fabricant,
+                    'conditionnement' => $analysis->conditionnement,
+                    'agrement' => $analysis->agrement,
+                    'lot' => $analysis->lot,
+                    'type_peche' => $analysis->type_peche,
+                    'nom_produit' => $analysis->nom_produit,
+                    'espece' => $analysis->espece,
+                    'origine' => $analysis->origine,
+                    'date_emballage' => $analysis->date_emballage,
+                    'date_consommation' => $analysis->date_consommation,
+                    'imp' => $analysis->imp,
+                    'hx' => $analysis->hx,
+                    'note_nucleotide' => $analysis->note_nucleotide,
+                    'cotation_fraicheur' => $analysis->cotation_fraicheur,
+                    'observations' => $analysis->observations,
+                    'ref_rapport' => $analysis->ref_rapport,
+                    'created_at' => $analysis->created_at,
+                    'updated_at' => $analysis->updated_at,
+                ];
+            })->toArray()
         ]);
     }
 

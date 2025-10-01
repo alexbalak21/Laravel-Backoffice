@@ -13,6 +13,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     })->name('dashboard');
 
     Route::resource('analyses', \App\Http\Controllers\AnalysisController::class);
+    Route::get('analyses/show', [\App\Http\Controllers\AnalysisController::class, 'showAll'])->name('analyses.show-all');
 });
 
 require __DIR__.'/settings.php';

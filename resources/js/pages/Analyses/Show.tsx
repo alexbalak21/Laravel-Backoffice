@@ -1,9 +1,20 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Analysis } from '@/types';
+import AppLayout from '@/layouts/app-layout';
+import { BreadcrumbItem } from '@/types';
+import { Head } from '@inertiajs/react';
 
 interface ShowProps {
   analyses: Analysis[];
 }
+
+
+const breadcrumbs: BreadcrumbItem[] = [
+    {
+        title: 'Analyses',
+        href: '/analyses',
+    },
+]
 
 export default function Show({ analyses }: ShowProps) {
   const formatDate = (dateString: string | null) => {
@@ -31,7 +42,9 @@ export default function Show({ analyses }: ShowProps) {
   }
 
   return (
-    <div className="rounded-md border">
+    <AppLayout breadcrumbs={breadcrumbs}>
+      <Head title="Analyses Table" />
+    <div className="rounded-md border m-4">
       <Table>
         <TableHeader>
           <TableRow>
@@ -92,5 +105,6 @@ export default function Show({ analyses }: ShowProps) {
         </TableBody>
       </Table>
     </div>
+    </AppLayout>
   );
 }
