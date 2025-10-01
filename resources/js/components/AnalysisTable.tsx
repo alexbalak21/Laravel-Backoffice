@@ -62,24 +62,31 @@ export default function AnalysisTable() {
 
   const handleSave = async () => {
     try {
-      // Transform the data to match the expected format
-      const tableData = data.map((row: Row) => {
-        const rowData: Record<string, any> = {};
-        
-        // Map each cell to the correct field name
-        row.forEach((cell, index) => {
-          const fieldName = columnFieldNames[index];
-          if (fieldName) {
-            rowData[fieldName] = cell?.value || '';
-          }
-        });
-        
-        return rowData;
-      });
-
+      // Transform the data to match the expected format and filter out empty rows
+      const tableData = data
+        .map((row: Row) => {
+          const rowData: Record<string, any> = {};
+          let hasData = false;
+          
+          // Map each cell to the correct field name
+          row.forEach((cell, index) => {
+            const fieldName = columnFieldNames[index];
+            if (fieldName && cell?.value?.trim() !== '') {
+              rowData[fieldName] = cell.value.trim();
+              hasData = true;
+            } else if (fieldName) {
+              rowData[fieldName] = '';
+            }
+          });
+          
+          return hasData ? rowData : null;
+        })
+        .filter(Boolean); // Remove null entries (empty rows)
+        console.log("date sent:", tableData);
       await router.post('/analyses', { rows: tableData }, {
         preserveScroll: true,
         preserveState: true,
+        
         onSuccess: () => {
           toast.success('Data saved successfully');
           setData([]);

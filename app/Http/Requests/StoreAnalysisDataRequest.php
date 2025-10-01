@@ -38,29 +38,30 @@ class StoreAnalysisDataRequest extends FormRequest
         $validated = $this->validated();
         $result = [];
 
-        // Define a mapping between display names and database fields
-        $fieldMap = [
-            'Numéro Rapport' => 'numero_rapport',
-            'Date et lieu de prélèvement' => 'prelevement_data', // Will be split into two fields
-            'Date, heure et T°C à la réception' => 'date_heure_reception_laboratoire',
-            'Conditions de conservation' => 'conditions_conservation',
-            'Date de mise en analyse' => 'date_heure_analyse',
-            'Fournisseur/Fabricant' => 'fournisseur_fabricant',
-            'Conditionnement' => 'conditionnement',
-            'Agrément' => 'agrement',
-            'Lot' => 'lot',
-            'Type de pèche' => 'type_peche',
-            'Nom de produit' => 'nom_produit',
-            'Espèce' => 'espece',
-            'Origine' => 'origine',
-            'Date d\'emballage' => 'date_emballage',
-            'Date de consommation' => 'date_consommation',
-            'IMP' => 'imp',
-            'HX' => 'hx',
-            'Note Nucléotide' => 'note_nucleotide',
-            'Cotation fraîcheur' => 'cotation_fraicheur',
-            'Observations' => 'observations',
-            'Référence rapport' => 'ref_rapport',
+        // The frontend is already sending the correct database field names
+        // So we'll use the data as is, but ensure all required fields are present
+        $databaseFields = [
+            'numero_rapport',
+            'lieu_prelevement',
+            'date_heure_reception_laboratoire',
+            'conditions_conservation',
+            'date_heure_analyse',
+            'fournisseur_fabricant',
+            'conditionnement',
+            'agrement',
+            'lot',
+            'type_peche',
+            'nom_produit',
+            'espece',
+            'origine',
+            'date_emballage',
+            'date_consommation',
+            'imp',
+            'hx',
+            'note_nucleotide',
+            'cotation_fraicheur',
+            'observations',
+            'ref_rapport'
         ];
 
         // Define default values for required fields
@@ -81,16 +82,14 @@ class StoreAnalysisDataRequest extends FormRequest
 
             $processedRow = [];
 
-            // First, map all the fields that don't need special processing
-            foreach ($fieldMap as $displayName => $dbField) {
-                $value = $row[$displayName] ?? null;
-                
-                // If value is empty, use default if available
-                if (empty($value) && array_key_exists($dbField, $defaultValues)) {
-                    $value = $defaultValues[$dbField];
+            // Use the data as is from the frontend
+            $processedRow = $row;
+            
+            // Ensure all database fields are present
+            foreach ($databaseFields as $field) {
+                if (!array_key_exists($field, $processedRow)) {
+                    $processedRow[$field] = $defaultValues[$field] ?? null;
                 }
-                
-                $processedRow[$dbField] = $value;
             }
 
             // Special processing for dates and numbers
@@ -102,21 +101,19 @@ class StoreAnalysisDataRequest extends FormRequest
                     }
                 }
 
-                // Parse prelevement data (e.g., "COPROMER, 27/08/2025, 11h30")
-                if (!empty($processedRow['prelevement_data'])) {
-                    $prelevement = $this->parsePrelevementData($processedRow['prelevement_data']);
-                    $processedRow['lieu_prelevement'] = $prelevement['lieu'] ?? null;
+                // Parse prelevement data (e.g., "COPROMER, 01/09/2025, 10h15")
+                if (!empty($processedRow['lieu_prelevement'])) {
+                    $prelevement = $this->parsePrelevementData($processedRow['lieu_prelevement']);
+                    $processedRow['lieu_prelevement'] = $prelevement['lieu'] ?? $processedRow['lieu_prelevement'];
                     $processedRow['date_heure_prelevement'] = $prelevement['date_heure'] ?? now();
-                    unset($processedRow['prelevement_data']); // Remove the temporary field
                 } else {
-                    $processedRow['lieu_prelevement'] = null;
                     $processedRow['date_heure_prelevement'] = now();
                 }
 
                 // Parse reception data (e.g., "25/08/2025, 11h45, 4°C")
                 if (!empty($processedRow['date_heure_reception_laboratoire'])) {
                     $reception = $this->parseReceptionData($processedRow['date_heure_reception_laboratoire']);
-                    $processedRow['temperature_reception'] = $reception['temperature'] ?? 0;
+                    $processedRow['temperature_reception'] = $reception['temperature'] ?? NULL;
                     $processedRow['date_heure_reception_laboratoire'] = $reception['date_heure'] ?? now();
                 } else {
                     $processedRow['temperature_reception'] = 0;
@@ -137,9 +134,8 @@ class StoreAnalysisDataRequest extends FormRequest
                 $processedRow['hx'] = is_numeric(str_replace(['%', ' '], '', $processedRow['hx'])) ? 
                     (float)str_replace(['%', ' '], '', $processedRow['hx']) : 0;
 
-                // Ensure required fields have values
+                // Ensure required fields have values (except numero_rapport which should never be overwritten)
                 $requiredFields = [
-                    'numero_rapport' => 'RAPPORT-' . now()->format('YmdHis'),
                     'lieu_prelevement' => null,
                     'fournisseur_fabricant' => null,
                     'conditionnement' => null,
@@ -155,6 +151,11 @@ class StoreAnalysisDataRequest extends FormRequest
                     if (empty($processedRow[$field])) {
                         $processedRow[$field] = $defaultValue;
                     }
+                }
+                
+                // Only set numero_rapport if it's completely missing, never overwrite
+                if (!isset($processedRow['numero_rapport']) || empty($processedRow['numero_rapport'])) {
+                    $processedRow['numero_rapport'] = 'RAPPORT-' . now()->format('YmdHis');
                 }
             } catch (\Exception $e) {
                 // Log the error but don't fail the entire import
@@ -186,13 +187,15 @@ class StoreAnalysisDataRequest extends FormRequest
     {
         $result = [
             'date_heure' => null,
-            'temperature' => null
+            'temperature' => 0
         ];
         
-        // Extract date and time
+        // Extract date and time (format: "01/09/2025, 10h30")
         if (preg_match('/(\d{2}\/\d{2}\/\d{4}),?\s*(\d{1,2})h(\d{0,2})?/i', $input, $matches)) {
-            $time = $matches[2] . ':' . (!empty($matches[3]) ? $matches[3] : '00') . ':00';
-            $result['date_heure'] = Carbon::createFromFormat('d/m/Y H:i:s', $matches[1] . ' ' . $time);
+            $date = $matches[1];
+            $hours = str_pad($matches[2], 2, '0', STR_PAD_LEFT);
+            $minutes = !empty($matches[3]) ? str_pad($matches[3], 2, '0', STR_PAD_LEFT) : '00';
+            $result['date_heure'] = Carbon::createFromFormat('d/m/Y H:i', "$date $hours:$minutes");
         }
         
         // Extract temperature
